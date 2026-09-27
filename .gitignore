@@ -3,3 +3,5 @@ __pycache__/
 *.pkl
 node_modules/
 dist/
+expense-classifier-backend/corrections.csv
+expense-classifier-backend/*.csv

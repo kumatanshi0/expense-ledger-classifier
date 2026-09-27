@@ -41,10 +41,16 @@ function App() {
     loadCategories();
   }, []);
 
-  function handleSubmitCorrection() {
-  setResult({...result,Category:selectedCategory});
-  setConfirmed(true);
-  setShowCorrectionForm(false);
+  async function handleSubmitCorrection(){
+    setResult({...result,Category:selectedCategory});
+    setConfirmed(true);
+    setShowCorrectionForm(false);
+
+    await fetch("http://localhost:5000/correct", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text:text, corrected_category:selectedCategory, note:note})
+    })
   }
 
  return (
@@ -57,6 +63,7 @@ function App() {
     <p className='receipt-row'>Category: {result.Category}</p>
     <p className='receipt-row'>Amount: {result.Amount}</p>
     <p className='receipt-row'>Type: <span className={result.Type === "Income" ? "income" : "expense"}>{result.Type}</span></p>
+    <p className="receipt-row">Confidence: {Math.round(result.Confidence * 100)}%</p>
     </div>
     )}
     {result && !confirmed && (

@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import re
+import csv
+import os
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
@@ -50,10 +53,13 @@ def classify():
 
     vector = vectorizer.transform([text])
     ml_category = str(model.predict(vector)[0])
+    probabilities = model.predict_proba(vector)[0]
+    best_idx = probabilities.argmax()
+    confidence = float(probabilities[best_idx])
     amount = extract_amount(text)
     txn_type, category = determine_type_and_category(text, ml_category)
     account = extract_account(text)
-    result = {"Category": category, "Amount": amount, "Type": txn_type}
+    result = {"Category": category, "Amount": amount, "Type": txn_type, "Confidence" :round(confidence,2)}
     if account:
         result["Account"] = account
     return result
@@ -62,6 +68,25 @@ def classify():
 def get_categories():
     categories= model.classes_
     return jsonify({"categories": list(categories)})   
+
+
+
+@app.route('/correct', methods=['POST'])
+def correct():
+    data = request.get_json()
+    text = data.get('text','')
+    corrected_category = data.get('corrected_category','')
+    note = data.get('note','')
+
+    file_exists = os.path.exists('corrections.csv')
+
+    with open('corrections.csv','a',newline='',encoding='utf-8') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            writer.writerow(['text','category','note'])
+        writer.writerow([text,corrected_category,note])
+
+    return jsonify({"status":"saved"})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
